@@ -2,6 +2,7 @@ package com.careerdevs.weatherapi.controllers;
 
 import ch.qos.logback.core.net.SyslogOutputStream;
 import com.careerdevs.weatherapi.models.CurrentWeather;
+import com.careerdevs.weatherapi.models.CurrentWeatherReport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -27,19 +28,22 @@ public class CurrentWeatherControllers {
     public ResponseEntity<?> getCurrentWeatherByCityPV (RestTemplate restTemplate, @PathVariable String cityName) {
 
         try {
+            String units = "imperial";
             String apiKey = env.getProperty("OW_API_KEY");
-            String queryString = "?q=" + cityName + "&appid=" + apiKey + "&units=imperial";
+            String queryString = "?q=" + cityName + "&appid=" + apiKey + "&units=" + units;
             String openWeatherURL = BASE_URL + queryString;
 
-            CurrentWeather openWeatherResponse = restTemplate.getForObject(openWeatherURL, CurrentWeather.class);
+            CurrentWeather owRes = restTemplate.getForObject(openWeatherURL, CurrentWeather.class);
 
-            System.out.println("City: " + openWeatherResponse.getName());
-            System.out.println("Temp: " + openWeatherResponse.getMain().getTemp());
-            System.out.println("Desc: " + openWeatherResponse.getWeather()[0].getDescription());
+            assert owRes != null;
 
+//            System.out.println("City: " + openWeatherResponse.getName());
+//            System.out.println("Temp: " + openWeatherResponse.getMain().getTemp());
+//            System.out.println("Desc: " + openWeatherResponse.getWeather()[0].getDescription());
 
+            CurrentWeatherReport report = new CurrentWeatherReport(owRes.getName(), owRes.getCoord(), owRes.getMain(), owRes.getWeather()[0], units);
 
-            return ResponseEntity.ok(openWeatherResponse);
+            return ResponseEntity.ok(report.toString());
 
         } catch(HttpClientErrorException.NotFound e){
             return ResponseEntity.status(404).body("City Not Found: " + cityName);
